@@ -399,6 +399,26 @@ const app = {
       app.renderTags('gift-tags-container', state.wishlistTags, 'wishlistTags');
     }
   }
+addParticipantManual: () => {
+    const input = document.getElementById('ev-participante-input');
+    const val = input.value.trim().replace(',', '');
+    if (val && !state.participantsTags.includes(val)) {
+      state.participantsTags.push(val);
+      app.renderTags('ev-tags-container', state.participantsTags, 'participantsTags');
+      input.value = '';
+    }
+  },
+
+  addGiftManual: () => {
+    const input = document.getElementById('gift-input');
+    const val = input.value.trim().replace(',', '');
+    if (val && !state.wishlistTags.includes(val)) {
+      state.wishlistTags.push(val);
+      app.renderTags('gift-tags-container', state.wishlistTags, 'wishlistTags');
+      input.value = '';
+    }
+  },
+
 };
 
 // INITIALIZATION
