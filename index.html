@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Amigo Secreto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Injeção do CSS -->
+  <style> <?!= include('style.css'); ?> </style>
+</head>
+<body>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loader" class="hidden">
+    <div class="spinner"></div>
+    <p>Carregando...</p>
+  </div>
+
+  <div class="app-container">
+    <header>
+      <h1>🎄 Amigo Secreto 🎁</h1>
+    </header>
+
+    <!-- TELA INICIAL -->
+    <section id="view-home" class="view">
+      <button class="btn btn-green" onclick="app.showView('view-config-opts')">Configurar Evento</button>
+      <button class="btn btn-red" onclick="app.loadEventList()">Entrar no Evento</button>
+    </section>
+
+    <!-- OPÇÕES DE CONFIGURAÇÃO -->
+    <section id="view-config-opts" class="view hidden">
+      <h2>Configuração</h2>
+      <button class="btn btn-green" onclick="app.prepareCreateEvent()">Criar evento</button>
+      <button class="btn btn-red" onclick="app.showView('view-edit-prompt')">Editar evento existente</button>
+      <button class="btn-link" onclick="app.showView('view-home')">Voltar</button>
+    </section>
+
+    <!-- PROMPT CÓDIGO EDIÇÃO -->
+    <section id="view-edit-prompt" class="view hidden">
+      <h2>Editar Evento</h2>
+      <input type="text" id="edit-codigo" placeholder="Código do Evento" class="input-block">
+      <button class="btn btn-green" onclick="app.prepareEditEvent()">Buscar Evento</button>
+      <button class="btn-link" onclick="app.showView('view-config-opts')">Voltar</button>
+    </section>
+
+    <!-- FORMULÁRIO DE EVENTO -->
+    <section id="view-event-form" class="view hidden">
+      <h2 id="event-form-title">Criar Evento</h2>
+      <input type="text" id="ev-codigo" class="input-block" readonly placeholder="Código do Evento">
+      <input type="text" id="ev-nome" class="input-block" placeholder="Nome do evento">
+      <input type="date" id="ev-data" class="input-block">
+      <input type="text" id="ev-local" class="input-block" placeholder="Endereço do local">
+      <input type="text" id="ev-link" class="input-block" placeholder="Link do Google Maps">
+      <input type="text" id="ev-valor" class="input-block" placeholder="Valor Mínimo (Ex: R$ 50,00)">
+      
+      <div class="tag-input-container">
+        <label>Participantes (digite o nome e aperte vírgula)</label>
+        <div id="ev-tags-container" class="tags-wrapper"></div>
+        <input type="text" id="ev-participante-input" class="input-block" placeholder="Ex: Micael Silva,">
+      </div>
+
+      <button class="btn btn-green" onclick="app.saveEvent()">Salvar Evento</button>
+      <button class="btn-link" onclick="app.showView('view-home')">Cancelar</button>
+    </section>
+
+    <!-- SELEÇÃO DE EVENTO (ENTRAR) -->
+    <section id="view-select-event" class="view hidden">
+      <h2>Escolha seu evento</h2>
+      <div id="event-list-container" class="flex-col"></div>
+      <button class="btn-link" onclick="app.showView('view-home')">Voltar</button>
+    </section>
+
+    <!-- IDENTIFICAÇÃO DO PARTICIPANTE -->
+    <section id="view-identify" class="view hidden">
+      <h2 id="id-event-name">Evento</h2>
+      <select id="id-participant-select" class="input-block">
+        <option value="">Selecione seu nome</option>
+      </select>
+      <button class="btn btn-red" onclick="app.handleParticipantSelection()">Continuar</button>
+      <button class="btn-link" onclick="app.showView('view-select-event')">Voltar</button>
+    </section>
+
+    <!-- LOGIN DE PARTICIPANTE -->
+    <section id="view-login" class="view hidden">
+      <h2 id="login-name">Nome</h2>
+      <input type="password" id="login-senha" class="input-block" placeholder="Sua senha">
+      <button class="btn btn-green" onclick="app.doLogin()">Entrar</button>
+      <button class="btn-link" onclick="app.showView('view-identify')">Voltar</button>
+    </section>
+
+    <!-- CONFIGURAR PARTICIPANTE (PRIMEIRO ACESSO) -->
+    <section id="view-setup-participant" class="view hidden">
+      <h2>Olá, <span id="setup-name"></span>!</h2>
+      <p>Configure seu perfil para o sorteio.</p>
+      
+      <input type="password" id="setup-senha" class="input-block" placeholder="Crie uma senha (min. 4 dígitos)" minlength="4">
+      <input type="password" id="setup-senha-conf" class="input-block" placeholder="Confirme a senha">
+      <input type="text" id="setup-sugestao" class="input-block" placeholder="Sugestão de brincadeira (Opcional)">
+      
+      <div class="tag-input-container">
+        <label>Lista de Desejos (separado por vírgula)</label>
+        <div class="preset-chips" id="preset-gifts">
+          <span class="chip" onclick="app.addGiftPreset('Eletrodomésticos')">Eletrodomésticos</span>
+          <span class="chip" onclick="app.addGiftPreset('Utensílios de cozinha')">Utensílios de cozinha</span>
+          <span class="chip" onclick="app.addGiftPreset('Ferramentas')">Ferramentas</span>
+          <span class="chip" onclick="app.addGiftPreset('Acessórios')">Acessórios</span>
+          <span class="chip" onclick="app.addGiftPreset('Roupas')">Roupas</span>
+          <span class="chip" onclick="app.addGiftPreset('Calçados')">Calçados</span>
+          <span class="chip" onclick="app.addGiftPreset('Gift Card')">Gift Card</span>
+          <span class="chip" onclick="app.addGiftPreset('Chocolate')">Chocolate</span>
+        </div>
+        <div id="gift-tags-container" class="tags-wrapper"></div>
+        <input type="text" id="gift-input" class="input-block" placeholder="Digite e aperte vírgula...">
+      </div>
+
+      <div class="draw-box">
+        <button id="btn-sortear" class="btn btn-red" onclick="app.doDraw()">🎁 Sortear meu amigo secreto</button>
+        <div id="draw-result" class="hidden">
+          <p>Seu amigo secreto é:</p>
+          <h3 id="draw-name-display" class="highlight-name">...</h3>
+        </div>
+      </div>
+
+      <button id="btn-save-setup" class="btn btn-green hidden" onclick="app.saveSetup()">Salvar e Concluir</button>
+    </section>
+
+    <!-- DASHBOARD PRINCIPAL -->
+    <section id="view-dashboard" class="view hidden">
+      <div class="dashboard-card">
+        <h2 id="dash-user-name">Seu Nome</h2>
+        <p class="subtitle">Sua lista de presentes: <span id="dash-user-lista"></span></p>
+      </div>
+
+      <div class="dashboard-card highlight-card">
+        <h3>Seu Amigo Secreto é</h3>
+        <h2 id="dash-amigo-nome">Nome do Amigo</h2>
+        <p><strong>Lista de presentes dele(a):</strong> <span id="dash-amigo-lista"></span></p>
+        <p><strong>Sugestão de brincadeira:</strong> <span id="dash-amigo-brincadeira"></span></p>
+      </div>
+
+      <div class="dashboard-card info-card">
+        <h3>Informações do Evento</h3>
+        <p><strong>Evento:</strong> <span id="dash-ev-nome"></span></p>
+        <p><strong>Data:</strong> <span id="dash-ev-data"></span></p>
+        <p><strong>Local:</strong> <span id="dash-ev-local"></span></p>
+        <p><strong>Valor:</strong> <span id="dash-ev-valor"></span></p>
+        <div class="map-container" id="dash-ev-map"></div>
+      </div>
+      
+      <button class="btn-link btn-logout" onclick="Auth.clear(); app.showView('view-home')">Sair (Limpar Cache)</button>
+    </section>
+
+  </div>
+
+  <!-- Injeção dos JS -->
+  <script> <?!= include('auth.js'); ?> </script>
+  <script> <?!= include('script.js'); ?> </script>
+</body>
+</html>
