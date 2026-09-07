@@ -1,435 +1,345 @@
-// COLOQUE AQUI O LINK DO SEU WEB APP DO GOOGLE APPS SCRIPT
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYqw-FC25qp_37Bc1r0PfD7HBUeSmBNnMgQPypQwUkB2aD8gUf_rtnG1GNb3qjuNcI/exec";
+// CONSTANTE PRINCIPAL DO BACKEND (COLE A URL DO SEU WEB APP AQUI)
+const API_URL = "https://script.google.com/macros/s/AKfycbxv-1XirLHQYGmrmNpkf42vTbmW1m6wT1bJbT5uoVKzDdj-L4ziPof8BSJW5fwNgont/exec"; 
 
-// VARIÁVEIS GLOBAIS DE ESTADO
-let state = {
-  currentEventCode: null,
-  currentEventName: null,
-  currentUser: null,
-  participantsTags: [],
-  wishlistTags: [],
-  drawnFriend: null
-};
+// Variáveis de Estado Global
+let participantesArray = [];
+let wishesArray = [];
+let currentEventCode = "";
+let currentUser = "";
+let friendDrawn = "";
 
-// CONTROLE DE UI
-const app = {
-  showView: (viewId) => {
-    document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
-    document.getElementById(viewId).classList.remove('hidden');
-  },
-  
-  showLoading: (show) => {
-    document.getElementById('loader').classList[show ? 'remove' : 'add']('hidden');
-  },
+// Elementos UI
+const views = document.querySelectorAll('.view');
+const loader = document.getElementById('loader');
 
-  generateCode: () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  },
+// Funções de Navegação
+function showView(viewId) {
+    views.forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+}
 
-  // === FLUXO DE CRIAÇÃO / EDIÇÃO DE EVENTO ===
-  prepareCreateEvent: () => {
-    state.participantsTags = [];
-    app.renderTags('ev-tags-container', state.participantsTags);
-    document.getElementById('ev-codigo').value = app.generateCode();
-    document.getElementById('ev-nome').value = '';
-    document.getElementById('ev-data').value = '';
-    document.getElementById('ev-local').value = '';
-    document.getElementById('ev-link').value = '';
-    document.getElementById('ev-valor').value = '';
-    document.getElementById('event-form-title').innerText = "Criar Evento";
-    app.showView('view-event-form');
-  },
+function showLoader() { loader.classList.remove('hidden'); }
+function hideLoader() { loader.classList.add('hidden'); }
 
-  prepareEditEvent: () => {
-    const code = document.getElementById('edit-codigo').value.trim().toUpperCase();
-    if (!code) return alert("Digite um código!");
-    
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'buscarEvento', parametros: [code] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      app.showLoading(false);
-      if (res.success) {
-        state.participantsTags = res.data.participantes.split(',').map(p => p.trim()).filter(Boolean);
-        document.getElementById('ev-codigo').value = res.data.codigo;
-        document.getElementById('ev-nome').value = res.data.nomeDoEvento;
-        
-        // Conversão de data para input type date
-        let dataInput = res.data.data;
-        if(dataInput && dataInput.substring) {
-            dataInput = new Date(dataInput).toISOString().split('T')[0];
+// Comunicação com Apps Script
+async function fetchAPI(action, data = {}) {
+    showLoader();
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: action, data: data }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain evita block de CORS complexo
+        });
+        const result = await response.json();
+        hideLoader();
+        if (result.success) {
+            return result.data;
+        } else {
+            alert("Erro: " + result.error);
+            return null;
         }
-        document.getElementById('ev-data').value = dataInput;
-        document.getElementById('ev-local').value = res.data.local;
-        document.getElementById('ev-link').value = res.data.link_local;
-        document.getElementById('ev-valor').value = res.data.valorMinimo;
-        app.renderTags('ev-tags-container', state.participantsTags);
-        document.getElementById('event-form-title').innerText = "Editar Evento";
-        app.showView('view-event-form');
-      } else {
-        alert(res.message);
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
+    } catch (error) {
+        hideLoader();
+        alert("Erro na conexão com o banco de dados.");
+        console.error(error);
+        return null;
+    }
+}
 
-  saveEvent: () => {
+// Lógica de Inputs com Tags (Participantes e Desejos)
+function setupTagInput(inputId, containerId, arrayRef) {
+    const input = document.getElementById(inputId);
+    const container = document.getElementById(containerId);
+
+    function renderTags() {
+        container.innerHTML = '';
+        arrayRef.forEach((item, index) => {
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `${item} <span onclick="removeTag('${inputId}', ${index})">✖</span>`;
+            container.appendChild(tag);
+        });
+    }
+
+    input.addEventListener('keyup', (e) => {
+        if (e.key === ',' || e.key === 'Enter') {
+            let val = input.value.replace(',', '').trim();
+            if (val !== '' && !arrayRef.includes(val)) {
+                arrayRef.push(val);
+                renderTags();
+            }
+            input.value = '';
+        }
+    });
+
+    // Anexa método de render e remoção ao escopo da janela
+    window[`render_${inputId}`] = renderTags;
+}
+
+window.removeTag = function(inputId, index) {
+    if(inputId === 'ce-participante-input') {
+        participantesArray.splice(index, 1);
+        window[`render_ce-participante-input`]();
+    } else if (inputId === 'fa-wish-input') {
+        wishesArray.splice(index, 1);
+        window[`render_fa-wish-input`]();
+    }
+}
+
+window.addWishTag = function(wish) {
+    if (!wishesArray.includes(wish)) {
+        wishesArray.push(wish);
+        window[`render_fa-wish-input`]();
+    }
+}
+
+// Geração de Código Inalterável (Letras e números)
+function generateCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+// ---------------- EVENT LISTENERS DE NAVEGAÇÃO ----------------
+
+document.getElementById('btn-secret-config').addEventListener('click', () => {
+    showView('view-config-options');
+});
+
+document.querySelectorAll('.btn-voltar-home').forEach(btn => {
+    btn.addEventListener('click', () => showView('view-home'));
+});
+
+document.querySelectorAll('.btn-voltar-config').forEach(btn => {
+    btn.addEventListener('click', () => showView('view-config-options'));
+});
+
+document.querySelector('.btn-voltar-events').addEventListener('click', () => {
+    showView('view-list-events');
+});
+
+// ---------------- CRIAR EVENTO ----------------
+document.getElementById('btn-novo-evento').addEventListener('click', () => {
+    participantesArray = [];
+    window[`render_ce-participante-input`]();
+    showView('view-create-event');
+});
+
+document.getElementById('btn-salvar-evento').addEventListener('click', async () => {
+    const nome = document.getElementById('ce-nome').value;
+    const dataEvt = document.getElementById('ce-data').value;
+    const local = document.getElementById('ce-local').value;
+    const link = document.getElementById('ce-link').value;
+    const valor = document.getElementById('ce-valor').value;
+
+    if (!nome || !dataEvt || !local || participantesArray.length < 3) {
+        alert("Preencha todos os campos e adicione pelo menos 3 participantes.");
+        return;
+    }
+
     const payload = {
-      codigo: document.getElementById('ev-codigo').value,
-      nomeDoEvento: document.getElementById('ev-nome').value,
-      data: document.getElementById('ev-data').value,
-      local: document.getElementById('ev-local').value,
-      link_local: document.getElementById('ev-link').value,
-      valorMinimo: document.getElementById('ev-valor').value,
-      participantes: state.participantsTags
+        nomeDoEvento: nome,
+        data: dataEvt,
+        local: local,
+        link_local: link,
+        valorMinimo: valor,
+        participantes: participantesArray,
+        codigo: generateCode()
     };
 
-    if(!payload.nomeDoEvento || state.participantsTags.length < 3) {
-      return alert("Preencha o nome e adicione pelo menos 3 participantes.");
+    const res = await fetchAPI("createEvent", payload);
+    if (res) {
+        alert(`Evento criado com sucesso!\nCódigo do Evento: ${res.codigo}\nAnote ou compartilhe este código com os participantes.`);
+        showView('view-home');
+        // Limpar forms
+        document.querySelectorAll('#view-create-event input').forEach(i => i.value = '');
+    }
+});
+
+// ---------------- ENTRAR NO EVENTO ----------------
+document.getElementById('btn-entrar').addEventListener('click', async () => {
+    const session = Auth.getSession();
+    if (session) {
+        // Pular direto pro dashboard se tiver cache
+        currentEventCode = session.codigo;
+        currentUser = session.nome;
+        loadDashboard();
+        return;
     }
 
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'salvarEvento', parametros: [payload] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      app.showLoading(false);
-      if(res.success) {
-        alert("Evento configurado com sucesso! Código: " + payload.codigo);
-        app.showView('view-home');
-      } else {
-        alert("Erro: " + res.message);
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
-
-  // === FLUXO DE ENTRADA DO PARTICIPANTE ===
-  loadEventList: () => {
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'listarEventos', parametros: [] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      app.showLoading(false);
-      if(res.success) {
-        const container = document.getElementById('event-list-container');
+    const events = await fetchAPI("getEvents");
+    if (events) {
+        const container = document.getElementById('events-list-container');
         container.innerHTML = '';
-        res.data.forEach(ev => {
-          const btn = document.createElement('button');
-          btn.className = 'btn btn-green';
-          btn.innerText = ev.nome;
-          btn.onclick = () => app.selectEvent(ev.codigo, ev.nome);
-          container.appendChild(btn);
+        events.forEach(evt => {
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerText = evt.nomeDoEvento;
+            btn.onclick = () => loadEventLogin(evt.codigo, evt.nomeDoEvento);
+            container.appendChild(btn);
         });
-        app.showView('view-select-event');
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
+        showView('view-list-events');
+    }
+});
 
-  selectEvent: (codigo, nome) => {
-    state.currentEventCode = codigo;
-    state.currentEventName = nome;
-    document.getElementById('id-event-name').innerText = nome;
+async function loadEventLogin(codigo, nomeEvento) {
+    currentEventCode = codigo;
+    document.getElementById('cn-evento-nome').innerText = nomeEvento;
+    const participants = await fetchAPI("getParticipants", { codigo: codigo });
     
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'listarParticipantes', parametros: [codigo] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      app.showLoading(false);
-      if(res.success) {
-        const select = document.getElementById('id-participant-select');
-        select.innerHTML = '<option value="">Selecione seu nome</option>';
-        res.data.forEach(p => {
-          select.innerHTML += `<option value="${p}">${p}</option>`;
+    if (participants) {
+        const select = document.getElementById('cn-select-name');
+        select.innerHTML = '<option value="">Selecione seu nome...</option>';
+        participants.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.innerText = p;
+            select.appendChild(opt);
         });
-        app.showView('view-identify');
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
+        document.getElementById('login-password-area').classList.add('hidden');
+        showView('view-choose-name');
+    }
+}
 
-  handleParticipantSelection: () => {
-    const nome = document.getElementById('id-participant-select').value;
-    if(!nome) return alert("Selecione seu nome!");
-    state.currentUser = nome;
+document.getElementById('cn-select-name').addEventListener('change', async (e) => {
+    const nome = e.target.value;
+    currentUser = nome;
+    if (nome) {
+        const status = await fetchAPI("checkUser", { codigo: currentEventCode, nome: nome });
+        if (status) {
+            if (status.isFirstAccess) {
+                // Ir para primeiro acesso
+                document.getElementById('fa-nome-user').innerText = nome;
+                wishesArray = [];
+                window[`render_fa-wish-input`]();
+                friendDrawn = "";
+                document.getElementById('btn-sortear').classList.remove('disabled');
+                document.getElementById('btn-sortear').disabled = false;
+                document.getElementById('resultado-sorteio').classList.add('hidden');
+                document.getElementById('btn-salvar-dados').classList.add('disabled');
+                document.getElementById('btn-salvar-dados').disabled = true;
+                
+                showView('view-first-access');
+            } else {
+                // Mostrar campo de login
+                document.getElementById('login-password-area').classList.remove('hidden');
+            }
+        }
+    } else {
+        document.getElementById('login-password-area').classList.add('hidden');
+    }
+});
 
-    // Checa cache local primeiro
-    if (Auth.check()) {
-      const sess = Auth.get();
-      if (sess.codigo === state.currentEventCode && sess.nome === nome) {
-        return app.loadDashboard();
-      }
+// Fazer Login (Já possui senha)
+document.getElementById('btn-fazer-login').addEventListener('click', async () => {
+    const senha = document.getElementById('cn-senha-login').value;
+    if (!senha) return alert("Digite a senha!");
+
+    const res = await fetchAPI("login", { codigo: currentEventCode, nome: currentUser, senha: senha });
+    if (res && res.success) {
+        Auth.saveSession(currentUser, currentEventCode, senha);
+        document.getElementById('cn-senha-login').value = '';
+        loadDashboard();
+    }
+});
+
+// ---------------- PRIMEIRO ACESSO E SORTEIO ----------------
+document.getElementById('btn-sortear').addEventListener('click', async () => {
+    const senha = document.getElementById('fa-senha').value;
+    const senhaConf = document.getElementById('fa-senha-conf').value;
+
+    if (senha.length < 4 || /\s/.test(senha) || /[\u{1F300}-\u{1F9FF}]/u.test(senha)) {
+        return alert("A senha deve ter no mínimo 4 dígitos, sem espaços ou emojis.");
+    }
+    if (senha !== senhaConf) {
+        return alert("As senhas não coincidem!");
+    }
+    if (wishesArray.length === 0) {
+        return alert("Adicione pelo menos um item na sua lista de desejos.");
     }
 
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'checarStatusParticipante', parametros: [state.currentEventCode, nome] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      app.showLoading(false);
-      if(res.success) {
-        if(res.hasPassword) {
-          document.getElementById('login-name').innerText = nome;
-          document.getElementById('login-senha').value = '';
-          app.showView('view-login');
-        } else {
-          app.prepareSetupParticipant();
-        }
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
-
-  doLogin: () => {
-    const senha = document.getElementById('login-senha').value;
-    if(!senha) return alert("Digite a senha.");
+    // Pede ao backend a lista de amigos disponíveis
+    const available = await fetchAPI("getAvailableFriends", { codigo: currentEventCode, nome: currentUser });
     
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'loginParticipante', parametros: [state.currentEventCode, state.currentUser, senha] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      if(res.success) {
-        Auth.save(state.currentUser, state.currentEventCode, senha);
-        app.loadDashboard();
-      } else {
-        app.showLoading(false);
-        alert(res.message);
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
-
-  prepareSetupParticipant: () => {
-    document.getElementById('setup-name').innerText = state.currentUser;
-    state.wishlistTags = [];
-    app.renderTags('gift-tags-container', state.wishlistTags);
-    document.getElementById('setup-senha').value = '';
-    document.getElementById('setup-senha-conf').value = '';
-    document.getElementById('setup-sugestao').value = '';
-    
-    document.getElementById('btn-sortear').classList.remove('hidden');
-    document.getElementById('draw-result').classList.add('hidden');
-    document.getElementById('btn-save-setup').classList.add('hidden');
-    state.drawnFriend = null;
-
-    app.showView('view-setup-participant');
-  },
-
-  doDraw: () => {
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'sortearAmigoSecreto', parametros: [state.currentEventCode, state.currentUser] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      app.showLoading(false);
-      if(res.success) {
-        state.drawnFriend = res.data;
-        document.getElementById('draw-name-display').innerText = res.data;
-        document.getElementById('btn-sortear').classList.add('hidden');
-        document.getElementById('draw-result').classList.remove('hidden');
-        document.getElementById('btn-save-setup').classList.remove('hidden');
-      } else {
-        alert("Erro no sorteio: " + res.message);
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
-
-  saveSetup: () => {
-    const senha = document.getElementById('setup-senha').value.trim();
-    const senhaConf = document.getElementById('setup-senha-conf').value.trim();
-    const sugestao = document.getElementById('setup-sugestao').value;
-    const lista = state.wishlistTags.join(', ');
-
-    if(senha.length < 4 || /\s/.test(senha)) return alert("A senha deve ter min 4 dígitos e sem espaços.");
-    if(senha !== senhaConf) return alert("As senhas não conferem.");
-    if(!state.drawnFriend) return alert("Você precisa sortear seu amigo secreto!");
-
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'salvarConfiguracaoParticipante', parametros: [state.currentEventCode, state.currentUser, senha, sugestao, lista, state.drawnFriend] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      if(res.success) {
-        Auth.save(state.currentUser, state.currentEventCode, senha);
-        app.loadDashboard();
-      } else {
-        app.showLoading(false);
-        alert(res.message);
-      }
-    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
-  },
-
-  loadDashboard: () => {
-    const sess = Auth.get();
-    if(!sess.codigo) return app.showView('view-home');
-    
-    app.showLoading(true);
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ acao: 'getDashboardInfo', parametros: [sess.codigo, sess.nome] })
-    })
-    .then(r => r.json())
-    .then(res => {
-      app.showLoading(false);
-      if(res.success) {
-        const d = res.data;
-        document.getElementById('dash-user-name').innerText = d.user.nome;
-        document.getElementById('dash-user-lista').innerText = d.user.listaDePresentes || "Nenhuma";
+    if (available && available.length > 0) {
+        // Escolhe aleatoriamente no front
+        const randomIndex = Math.floor(Math.random() * available.length);
+        friendDrawn = available[randomIndex];
         
-        document.getElementById('dash-amigo-nome').innerText = d.user.amigoSecreto;
-        document.getElementById('dash-amigo-lista').innerText = d.amigoData ? d.amigoData.listaDePresentes : "Nenhuma";
-        document.getElementById('dash-amigo-brincadeira').innerText = d.amigoData ? d.amigoData.sugestaoBrincadeira : "Nenhuma";
-
-        document.getElementById('dash-ev-nome').innerText = d.evento.nomeDoEvento;
+        document.getElementById('amigo-sorteado-nome').innerText = friendDrawn;
+        document.getElementById('resultado-sorteio').classList.remove('hidden');
         
-        // Formatar a data
-        let displayDate = d.evento.data;
-        if(d.evento.data) {
-           const dt = new Date(d.evento.data);
-           displayDate = dt.toLocaleDateString('pt-BR');
-        }
+        // Desativa botão de sortear e ativa o de salvar
+        const btnSortear = document.getElementById('btn-sortear');
+        btnSortear.disabled = true;
+        btnSortear.classList.add('disabled');
+        
+        const btnSalvar = document.getElementById('btn-salvar-dados');
+        btnSalvar.disabled = false;
+        btnSalvar.classList.remove('disabled');
+    } else {
+        alert("Ops! Ocorreu um erro no sorteio (talvez só reste o seu próprio nome). Contate o organizador.");
+    }
+});
 
-        document.getElementById('dash-ev-data').innerText = displayDate;
-        document.getElementById('dash-ev-local').innerText = d.evento.local;
-        document.getElementById('dash-ev-valor').innerText = d.evento.valorMinimo;
+document.getElementById('btn-salvar-dados').addEventListener('click', async () => {
+    const payload = {
+        codigo: currentEventCode,
+        nome: currentUser,
+        senha: document.getElementById('fa-senha').value,
+        sugestaoBrincadeira: document.getElementById('fa-brincadeira').value,
+        listaDePresentes: wishesArray,
+        amigoSecreto: friendDrawn
+    };
 
-        const mapContainer = document.getElementById('dash-ev-map');
-        if(d.evento.link_local && d.evento.link_local.includes('http')) {
-          if(d.evento.link_local.includes('embed')) {
-             mapContainer.innerHTML = `<iframe src="${d.evento.link_local}" allowfullscreen="" loading="lazy"></iframe>`;
-          } else {
-             mapContainer.innerHTML = `<a href="${d.evento.link_local}" target="_blank" class="btn-link">Abrir no Google Maps</a>`;
-          }
-        } else {
-          mapContainer.innerHTML = '';
-        }
+    const res = await fetchAPI("saveFirstAccess", payload);
+    if (res && res.success) {
+        Auth.saveSession(currentUser, currentEventCode, payload.senha);
+        alert("Dados salvos com sucesso! Redirecionando para a tela principal.");
+        loadDashboard();
+    }
+});
 
-        app.showView('view-dashboard');
-      } else {
-        Auth.clear();
-        app.showView('view-home');
-      }
-    }).catch(err => { 
-        app.showLoading(false); 
-        Auth.clear(); 
-        app.showView('view-home'); 
-    });
-  },
+// ---------------- DASHBOARD PRINCIPAL ----------------
+async function loadDashboard() {
+    const data = await fetchAPI("getDashboard", { codigo: currentEventCode, nome: currentUser });
+    if (data) {
+        document.getElementById('dash-user-nome').innerText = data.usuario.nome;
+        document.getElementById('dash-amigo-nome').innerText = data.amigoSecreto.nome;
+        document.getElementById('dash-amigo-wishes').innerText = data.amigoSecreto.listaDePresentes.split(',').join(' • ');
+        
+        document.getElementById('dash-evento-nome').innerText = data.evento.nomeDoEvento;
+        
+        // Formatar data
+        const dateObj = new Date(data.evento.data);
+        document.getElementById('dash-data').innerText = dateObj.toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+        
+        document.getElementById('dash-valor').innerText = data.evento.valorMinimo;
+        document.getElementById('dash-local').innerText = data.evento.local;
+        
+        document.getElementById('dash-link-btn').href = data.evento.link_local;
+        document.getElementById('dash-user-wishes').innerText = data.usuario.listaDePresentes.split(',').join(' • ');
 
-  // === UTILITÁRIOS DE TAGS ===
- setupTagInput: (inputId, arrayRef, containerId) => {
-    const input = document.getElementById(inputId);
+        // Configurar Iframe do Maps (Busca baseada no endereço digitado)
+        const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(data.evento.local)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        document.getElementById('dash-map-iframe').src = mapUrl;
+
+        showView('view-dashboard');
+    }
+}
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+    Auth.clearSession();
+    currentEventCode = "";
+    currentUser = "";
+    showView('view-home');
+});
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    setupTagInput('ce-participante-input', 'participants-tags', participantesArray);
+    setupTagInput('fa-wish-input', 'wishes-tags', wishesArray);
     
-    // Usamos 'input' em vez de 'keyup' para capturar qualquer inserção (inclusive colar texto ou vírgula no mobile)
-    input.addEventListener('input', (e) => {
-      let val = input.value;
-      // Se o usuário digitou ou colou uma vírgula
-      if (val.includes(',')) {
-        let parts = val.split(',');
-        parts.forEach(part => {
-          let cleanVal = part.trim();
-          if (cleanVal && !state[arrayRef].includes(cleanVal)) {
-            state[arrayRef].push(cleanVal);
-          }
-        });
-        input.value = '';
-        app.renderTags(containerId, state[arrayRef], arrayRef);
-      }
-    });
-
-    // Compatibilidade extra para o botão "Ir" / "Enter" do teclado mobile
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        let val = input.value.trim().replace(',', '');
-        if (val && !state[arrayRef].includes(val)) {
-          state[arrayRef].push(val);
-          app.renderTags(containerId, state[arrayRef], arrayRef);
-        }
-        input.value = '';
-      }
-    });
-  },
-
-  renderTags: (containerId, tagsArray, arrayRef) => {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-    tagsArray.forEach((tag, index) => {
-      const span = document.createElement('span');
-      span.className = 'tag';
-      span.innerHTML = `${tag} <span onclick="app.removeTag('${arrayRef}', ${index}, '${containerId}')">✖</span>`;
-      container.appendChild(span);
-    });
-  },
-
-  removeTag: (arrayRef, index, containerId) => {
-    if(state[arrayRef]) {
-      state[arrayRef].splice(index, 1);
-      app.renderTags(containerId, state[arrayRef], arrayRef);
+    // Checa cache logo na abertura
+    if(Auth.hasSession()) {
+        showView('view-home'); // Fica na home, mas quando clicar em entrar pula.
     }
-  },
-
-  addGiftPreset: (item) => {
-    if(!state.wishlistTags.includes(item)) {
-      state.wishlistTags.push(item);
-      app.renderTags('gift-tags-container', state.wishlistTags, 'wishlistTags');
-    }
-  }
-addParticipantManual: () => {
-    const input = document.getElementById('ev-participante-input');
-    const val = input.value.trim().replace(',', '');
-    if (val && !state.participantsTags.includes(val)) {
-      state.participantsTags.push(val);
-      app.renderTags('ev-tags-container', state.participantsTags, 'participantsTags');
-      input.value = '';
-    }
-  },
-
-  addGiftManual: () => {
-    const input = document.getElementById('gift-input');
-    const val = input.value.trim().replace(',', '');
-    if (val && !state.wishlistTags.includes(val)) {
-      state.wishlistTags.push(val);
-      app.renderTags('gift-tags-container', state.wishlistTags, 'wishlistTags');
-      input.value = '';
-    }
-  },
-
-};
-
-// INITIALIZATION
-document.addEventListener("DOMContentLoaded", () => {
-  app.setupTagInput('ev-participante-input', 'participantsTags', 'ev-tags-container');
-  app.setupTagInput('gift-input', 'wishlistTags', 'gift-tags-container');
-  
-  // Checa se já existe cache salvo no dispositivo
-  if (Auth.check()) {
-    app.loadDashboard();
-  } else {
-    app.showView('view-home');
-  }
 });
