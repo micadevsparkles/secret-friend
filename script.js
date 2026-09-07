@@ -341,12 +341,32 @@ const app = {
   },
 
   // === UTILITÁRIOS DE TAGS ===
-  setupTagInput: (inputId, arrayRef, containerId) => {
+ setupTagInput: (inputId, arrayRef, containerId) => {
     const input = document.getElementById(inputId);
-    input.addEventListener('keyup', (e) => {
-      if(e.key === ',') {
-        let val = input.value.replace(',', '').trim();
-        if(val && !state[arrayRef].includes(val)) {
+    
+    // Usamos 'input' em vez de 'keyup' para capturar qualquer inserção (inclusive colar texto ou vírgula no mobile)
+    input.addEventListener('input', (e) => {
+      let val = input.value;
+      // Se o usuário digitou ou colou uma vírgula
+      if (val.includes(',')) {
+        let parts = val.split(',');
+        parts.forEach(part => {
+          let cleanVal = part.trim();
+          if (cleanVal && !state[arrayRef].includes(cleanVal)) {
+            state[arrayRef].push(cleanVal);
+          }
+        });
+        input.value = '';
+        app.renderTags(containerId, state[arrayRef], arrayRef);
+      }
+    });
+
+    // Compatibilidade extra para o botão "Ir" / "Enter" do teclado mobile
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        let val = input.value.trim().replace(',', '');
+        if (val && !state[arrayRef].includes(val)) {
           state[arrayRef].push(val);
           app.renderTags(containerId, state[arrayRef], arrayRef);
         }
