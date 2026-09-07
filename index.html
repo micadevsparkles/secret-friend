@@ -53,10 +53,13 @@
       <input type="text" id="ev-link" class="input-block" placeholder="Link do Google Maps">
       <input type="text" id="ev-valor" class="input-block" placeholder="Valor Mínimo (Ex: R$ 50,00)">
       
-      <div class="tag-input-container">
-        <label>Participantes (digite o nome e aperte vírgula)</label>
+    <div class="tag-input-container">
+        <label>Participantes (digite o nome e clique em Adicionar ou use vírgula)</label>
         <div id="ev-tags-container" class="tags-wrapper"></div>
-        <input type="text" id="ev-participante-input" class="input-block" placeholder="Ex: Micael Silva,">
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="ev-participante-input" class="input-block" placeholder="Ex: Micael Silva" style="margin-bottom: 0;">
+          <button type="button" class="btn btn-green" style="width: 120px; padding: 0 10px;" onclick="app.addParticipantManual()">Adicionar</button>
+        </div>
       </div>
 
       <button class="btn btn-green" onclick="app.saveEvent()">Salvar Evento</button>
