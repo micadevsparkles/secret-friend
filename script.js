@@ -1,5 +1,5 @@
 // COLOQUE AQUI O LINK DO SEU WEB APP DO GOOGLE APPS SCRIPT
-const APPS_SCRIPT_URL = "SUA_URL_DO_WEB_APP_AQUI";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYqw-FC25qp_37Bc1r0PfD7HBUeSmBNnMgQPypQwUkB2aD8gUf_rtnG1GNb3qjuNcI/exec";
 
 // VARIÁVEIS GLOBAIS DE ESTADO
 let state = {
