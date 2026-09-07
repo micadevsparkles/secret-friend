@@ -1,0 +1,96 @@
+:root {
+  --red: #c8102e;
+  --dark-red: #a00b23;
+  --green: #0f5934;
+  --dark-green: #0a4225;
+  --snow: #f9f9f9;
+  --gold: #f1c40f;
+  --text: #333;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--snow);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.app-container {
+  background: white;
+  max-width: 450px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  padding: 30px 20px;
+  border-top: 6px solid var(--red);
+  text-align: center;
+}
+
+header h1 {
+  font-family: 'Mountains of Christmas', cursive;
+  color: var(--red);
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
+
+h2, h3 { color: var(--green); margin-bottom: 15px; }
+.hidden { display: none !important; }
+.flex-col { display: flex; flex-direction: column; gap: 10px; }
+
+/* Botões */
+.btn {
+  display: block; width: 100%; padding: 12px; margin-bottom: 10px;
+  border: none; border-radius: 6px; font-size: 1rem; font-weight: 600;
+  cursor: pointer; transition: 0.3s; color: white;
+}
+.btn-red { background: var(--red); }
+.btn-red:hover { background: var(--dark-red); }
+.btn-green { background: var(--green); }
+.btn-green:hover { background: var(--dark-green); }
+.btn-link { background: none; color: #666; border: none; cursor: pointer; text-decoration: underline; margin-top: 10px; font-size: 0.9rem;}
+.btn-logout { color: var(--red); }
+
+/* Inputs */
+.input-block {
+  width: 100%; padding: 12px; margin-bottom: 15px;
+  border: 1px solid #ddd; border-radius: 6px; font-family: inherit;
+}
+.input-block:read-only { background: #eee; color: #666; }
+
+/* Tags Input */
+.tag-input-container { text-align: left; margin-bottom: 20px; }
+.tag-input-container label { display: block; font-size: 0.85rem; margin-bottom: 5px; color: #555;}
+.tags-wrapper { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+.tag { background: var(--green); color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.85rem; display: flex; align-items: center; }
+.tag span { margin-left: 6px; cursor: pointer; font-weight: bold; }
+
+/* Chips (Sugestões) */
+.preset-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.chip { background: #e0e0e0; color: #333; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; transition: 0.2s;}
+.chip:hover { background: var(--red); color: white; }
+
+/* Dashboard Cards */
+.dashboard-card { background: var(--snow); border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 15px; text-align: left; }
+.highlight-card { background: #fffcf2; border-color: var(--gold); border-left: 5px solid var(--gold); }
+.info-card p { font-size: 0.9rem; margin-bottom: 5px; }
+.highlight-name { font-family: 'Mountains of Christmas', cursive; font-size: 2rem; color: var(--red); text-align: center; margin: 10px 0;}
+
+/* Draw Box */
+.draw-box { background: #fdfdfd; border: 2px dashed var(--red); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+
+/* Loader */
+#loader {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255,255,255,0.9); z-index: 1000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--red); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px;}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.map-container iframe { width: 100%; height: 200px; border: none; border-radius: 6px; margin-top: 10px; }
