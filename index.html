@@ -101,7 +101,7 @@
       <input type="text" id="setup-sugestao" class="input-block" placeholder="Sugestão de brincadeira (Opcional)">
       
       <div class="tag-input-container">
-        <label>Lista de Desejos (separado por vírgula)</label>
+        <label>Lista de Desejos</label>
         <div class="preset-chips" id="preset-gifts">
           <span class="chip" onclick="app.addGiftPreset('Eletrodomésticos')">Eletrodomésticos</span>
           <span class="chip" onclick="app.addGiftPreset('Utensílios de cozinha')">Utensílios de cozinha</span>
@@ -113,7 +113,10 @@
           <span class="chip" onclick="app.addGiftPreset('Chocolate')">Chocolate</span>
         </div>
         <div id="gift-tags-container" class="tags-wrapper"></div>
-        <input type="text" id="gift-input" class="input-block" placeholder="Digite e aperte vírgula...">
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="gift-input" class="input-block" placeholder="Digite o item..." style="margin-bottom: 0;">
+          <button type="button" class="btn btn-green" style="width: 120px; padding: 0 10px;" onclick="app.addGiftManual()">Adicionar</button>
+        </div>
       </div>
 
       <div class="draw-box">
