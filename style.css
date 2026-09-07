@@ -94,3 +94,70 @@ h2, h3 { color: var(--green); margin-bottom: 15px; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 .map-container iframe { width: 100%; height: 200px; border: none; border-radius: 6px; margin-top: 10px; }
+/* 1. Reset Global e Prevenção de Estouro de Tela */
+*, *::before, *::after {
+  box-sizing: border-box;
+  min-width: 0; /* Evita que elementos flex/grid extrapolem o container */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Corta qualquer elemento que tente vazar para as laterais */
+  font-size: 16px; /* Tamanho base ideal para legibilidade no mobile */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%; /* Impede o navegador móvel de esticar o texto sozinho */
+}
+
+/* 2. Containers Fluidos (Nunca fixos em pixels no mobile) */
+.container, .card, form, main {
+  width: 100%;
+  max-width: 100%; /* Garante que nunca ultrapasse a largura da tela */
+  padding: 16px;
+  margin: 0 auto;
+}
+
+/* Para telas maiores (desktop), centraliza limitando a largura máxima */
+@media (min-width: 768px) {
+  .container, .card, form, main {
+    max-width: 600px;
+  }
+}
+
+/* 3. Inputs e Botões com Toque Amigável e Sem Zoom Indesejado */
+input, select, textarea, button {
+  width: 100%;
+  max-width: 100%;
+  font-size: 16px; /* Essencial: Fontes menores que 16px fazem o iOS dar zoom automático irritante */
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/* 4. Flexbox Dinâmico para Tags, Chips e Botões Lado a Lado */
+.tags-wrapper, .preset-chips, .button-group {
+  display: flex;
+  flex-wrap: wrap; /* Joga os elementos para a linha de baixo se faltar espaço */
+  gap: 8px;
+  width: 100%;
+}
+
+/* Tags individuais ajustáveis */
+.tag {
+  max-width: 100%;
+  word-break: break-word; /* Quebra palavras muito longas para não empurrar o layout */
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 5. Tipografia Fluida (Escalona suavemente entre celular e PC) */
+h1 { font-size: clamp(1.5rem, 5vw, 2.2rem); }
+h2 { font-size: clamp(1.25rem, 4vw, 1.8rem); }
+p, span, label { font-size: clamp(0.9rem, 2.5vw, 1rem); }
+
+/* 6. Tratamento de Tabelas (Gera scroll horizontal interno se forem grandes) */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+}
