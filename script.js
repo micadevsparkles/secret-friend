@@ -1,3 +1,6 @@
+// COLOQUE AQUI O LINK DO SEU WEB APP DO GOOGLE APPS SCRIPT
+const APPS_SCRIPT_URL = "SUA_URL_DO_WEB_APP_AQUI";
+
 // VARIÁVEIS GLOBAIS DE ESTADO
 let state = {
   currentEventCode: null,
@@ -42,7 +45,13 @@ const app = {
     if (!code) return alert("Digite um código!");
     
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'buscarEvento', parametros: [code] })
+    })
+    .then(r => r.json())
+    .then(res => {
       app.showLoading(false);
       if (res.success) {
         state.participantsTags = res.data.participantes.split(',').map(p => p.trim()).filter(Boolean);
@@ -64,7 +73,7 @@ const app = {
       } else {
         alert(res.message);
       }
-    }).buscarEvento(code);
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   saveEvent: () => {
@@ -83,7 +92,13 @@ const app = {
     }
 
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'salvarEvento', parametros: [payload] })
+    })
+    .then(r => r.json())
+    .then(res => {
       app.showLoading(false);
       if(res.success) {
         alert("Evento configurado com sucesso! Código: " + payload.codigo);
@@ -91,13 +106,19 @@ const app = {
       } else {
         alert("Erro: " + res.message);
       }
-    }).salvarEvento(payload);
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   // === FLUXO DE ENTRADA DO PARTICIPANTE ===
   loadEventList: () => {
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'listarEventos', parametros: [] })
+    })
+    .then(r => r.json())
+    .then(res => {
       app.showLoading(false);
       if(res.success) {
         const container = document.getElementById('event-list-container');
@@ -111,7 +132,7 @@ const app = {
         });
         app.showView('view-select-event');
       }
-    }).listarEventos();
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   selectEvent: (codigo, nome) => {
@@ -120,7 +141,13 @@ const app = {
     document.getElementById('id-event-name').innerText = nome;
     
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'listarParticipantes', parametros: [codigo] })
+    })
+    .then(r => r.json())
+    .then(res => {
       app.showLoading(false);
       if(res.success) {
         const select = document.getElementById('id-participant-select');
@@ -130,7 +157,7 @@ const app = {
         });
         app.showView('view-identify');
       }
-    }).listarParticipantes(codigo);
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   handleParticipantSelection: () => {
@@ -147,7 +174,13 @@ const app = {
     }
 
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'checarStatusParticipante', parametros: [state.currentEventCode, nome] })
+    })
+    .then(r => r.json())
+    .then(res => {
       app.showLoading(false);
       if(res.success) {
         if(res.hasPassword) {
@@ -158,7 +191,7 @@ const app = {
           app.prepareSetupParticipant();
         }
       }
-    }).checarStatusParticipante(state.currentEventCode, nome);
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   doLogin: () => {
@@ -166,7 +199,13 @@ const app = {
     if(!senha) return alert("Digite a senha.");
     
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'loginParticipante', parametros: [state.currentEventCode, state.currentUser, senha] })
+    })
+    .then(r => r.json())
+    .then(res => {
       if(res.success) {
         Auth.save(state.currentUser, state.currentEventCode, senha);
         app.loadDashboard();
@@ -174,7 +213,7 @@ const app = {
         app.showLoading(false);
         alert(res.message);
       }
-    }).loginParticipante(state.currentEventCode, state.currentUser, senha);
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   prepareSetupParticipant: () => {
@@ -195,7 +234,13 @@ const app = {
 
   doDraw: () => {
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'sortearAmigoSecreto', parametros: [state.currentEventCode, state.currentUser] })
+    })
+    .then(r => r.json())
+    .then(res => {
       app.showLoading(false);
       if(res.success) {
         state.drawnFriend = res.data;
@@ -206,7 +251,7 @@ const app = {
       } else {
         alert("Erro no sorteio: " + res.message);
       }
-    }).sortearAmigoSecreto(state.currentEventCode, state.currentUser);
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   saveSetup: () => {
@@ -220,7 +265,13 @@ const app = {
     if(!state.drawnFriend) return alert("Você precisa sortear seu amigo secreto!");
 
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'salvarConfiguracaoParticipante', parametros: [state.currentEventCode, state.currentUser, senha, sugestao, lista, state.drawnFriend] })
+    })
+    .then(r => r.json())
+    .then(res => {
       if(res.success) {
         Auth.save(state.currentUser, state.currentEventCode, senha);
         app.loadDashboard();
@@ -228,7 +279,7 @@ const app = {
         app.showLoading(false);
         alert(res.message);
       }
-    }).salvarConfiguracaoParticipante(state.currentEventCode, state.currentUser, senha, sugestao, lista, state.drawnFriend);
+    }).catch(err => { app.showLoading(false); alert("Erro de conexão."); });
   },
 
   loadDashboard: () => {
@@ -236,7 +287,13 @@ const app = {
     if(!sess.codigo) return app.showView('view-home');
     
     app.showLoading(true);
-    google.script.run.withSuccessHandler(res => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ acao: 'getDashboardInfo', parametros: [sess.codigo, sess.nome] })
+    })
+    .then(r => r.json())
+    .then(res => {
       app.showLoading(false);
       if(res.success) {
         const d = res.data;
@@ -276,7 +333,11 @@ const app = {
         Auth.clear();
         app.showView('view-home');
       }
-    }).getDashboardInfo(sess.codigo, sess.nome);
+    }).catch(err => { 
+        app.showLoading(false); 
+        Auth.clear(); 
+        app.showView('view-home'); 
+    });
   },
 
   // === UTILITÁRIOS DE TAGS ===
