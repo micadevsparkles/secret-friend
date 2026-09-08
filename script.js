@@ -46,7 +46,6 @@ async function fetchAPI(action, data = {}) {
     }
 }
 
-// Lógica de Inputs com Tags (Participantes e Desejos)
 function setupTagInput(inputId, containerId, arrayRef) {
     const input = document.getElementById(inputId);
     const container = document.getElementById(containerId);
@@ -61,14 +60,28 @@ function setupTagInput(inputId, containerId, arrayRef) {
         });
     }
 
-    input.addEventListener('keyup', (e) => {
-        if (e.key === ',' || e.key === 'Enter') {
-            let val = input.value.replace(',', '').trim();
-            if (val !== '' && !arrayRef.includes(val)) {
-                arrayRef.push(val);
-                renderTags();
-            }
-            input.value = '';
+    // Função interna para adicionar a tag
+    function addTag() {
+        let val = input.value.replace(',', '').trim();
+        if (val !== '' && !arrayRef.includes(val)) {
+            arrayRef.push(val);
+            renderTags();
+        }
+        input.value = '';
+    }
+
+    // Evento 'input' funciona perfeitamente em mobile para capturar a vírgula
+    input.addEventListener('input', () => {
+        if (input.value.includes(',')) {
+            addTag();
+        }
+    });
+
+    // Evento 'keydown' para capturar o Enter
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Evita recarregar a tela sem querer
+            addTag();
         }
     });
 
@@ -123,17 +136,17 @@ document.getElementById('btn-novo-evento').addEventListener('click', () => {
     showView('view-create-event');
 });
 
-document.getElementById('btn-salvar-evento').addEventListener('click', async () => {
-    const nome = document.getElementById('ce-nome').value;
+    document.getElementById('btn-salvar-evento').addEventListener('click', async () => {
+    const nome = document.getElementById('ce-nome').value.trim();
     const dataEvt = document.getElementById('ce-data').value;
-    const local = document.getElementById('ce-local').value;
-    const link = document.getElementById('ce-link').value;
+    const local = document.getElementById('ce-local').value.trim();
+    const link = document.getElementById('ce-link').value.trim();
     const valor = document.getElementById('ce-valor').value;
 
-    if (!nome || !dataEvt || !local || participantesArray.length < 3) {
-        alert("Preencha todos os campos e adicione pelo menos 3 participantes.");
-        return;
-    }
+    if (!nome) return alert("Por favor, preencha o Nome do Evento.");
+    if (!dataEvt) return alert("Por favor, escolha a Data do evento.");
+    if (!local) return alert("Por favor, digite o Local do evento.");
+    if (participantesArray.length < 3) return alert("Adicione pelo menos 3 participantes.");
 
     const payload = {
         nomeDoEvento: nome,
