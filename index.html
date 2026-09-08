@@ -43,27 +43,27 @@
         <section id="view-create-event" class="view ">
             <h2>Novo Evento</h2>
             <div class="form-group">
-                <label>Nome do Evento:</label>
-                <input type="text" id="ce-nome" placeholder="Ex: Natal da Família">
+               <label for="ce-nome">Nome do Evento:</label>
+    <input type="text" id="ce-nome" placeholder="Ex: Natal da Família">
             </div>
             <div class="form-group">
-                <label>Data do evento:</label>
-                <input type="date" id="ce-data">
+                <label for="ce-data">Data do evento:</label>
+    <input type="date" id="ce-data">
             </div>
             <div class="form-group">
-                <label>Local do evento (Endereço escrito):</label>
-                <input type="text" id="ce-local" placeholder="Rua das Neves, 123">
+                <label for="ce-local">Local do evento (Endereço escrito):</label>
+    <input type="text" id="ce-local" placeholder="Rua das Neves, 123">
             </div>
             <div class="form-group">
-                <label>Link do Maps:</label>
+                <label for="ce-link">Link do Maps:</label>
                 <input type="url" id="ce-link" placeholder="https://maps.app.goo.gl/...">
             </div>
             <div class="form-group">
-                <label>Valor Mínimo (R$):</label>
+                <label for="ce-valor">Valor Mínimo (R$):</label>
                 <input type="number" id="ce-valor" placeholder="50.00">
             </div>
             <div class="form-group">
-                <label>Participantes (Digite o nome e coloque VÍRGULA para adicionar):</label>
+                <label for="ce-participante-input">Participantes (Digite o nome e coloque VÍRGULA para adicionar):</label>
                 <div class="tags-input-container" id="participants-tags-container">
                     <div id="participants-tags" class="tags-list"></div>
                     <input type="text" id="ce-participante-input" placeholder="Nome do participante...">
@@ -86,14 +86,14 @@
         <section id="view-choose-name" class="view ">
             <h2 id="cn-evento-nome">Nome do Evento</h2>
             <div class="form-group">
-                <label>Quem é você?</label>
+                <label for="cn-select-name">Quem é você?</label>
                 <select id="cn-select-name">
                     <option value="">Selecione seu nome...</option>
                 </select>
             </div>
             <div id="login-password-area" class="hidden">
                 <div class="form-group">
-                    <label>Sua Senha:</label>
+                    <label for="cn-senha-login">Sua Senha:</label>
                     <input type="password" id="cn-senha-login" placeholder="Digite sua senha">
                 </div>
                 <button id="btn-fazer-login" class="btn primary">Entrar 🎄</button>
@@ -105,19 +105,19 @@
         <section id="view-first-access" class="view ">
             <h2>Bem-vindo(a), <span id="fa-nome-user"></span>!</h2>
             <div class="form-group">
-                <label>Crie uma Senha (Mín. 4 dígitos, sem espaços):</label>
+                <label for="fa-senha">Crie uma Senha (Mín. 4 dígitos, sem espaços):</label>
                 <input type="password" id="fa-senha" placeholder="Sua senha secreta">
             </div>
             <div class="form-group">
-                <label>Repita a Senha:</label>
+                <label for="fa-senha-conf">Repita a Senha:</label>
                 <input type="password" id="fa-senha-conf" placeholder="Confirme sua senha">
             </div>
             <div class="form-group">
-                <label>Sugestão de Brincadeira (Opcional):</label>
+                <label for="fa-brincadeira">Sugestão de Brincadeira (Opcional):</label>
                 <input type="text" id="fa-brincadeira" placeholder="Ex: Amigo da onça, Rouba presente...">
             </div>
             <div class="form-group">
-                <label>Sua Lista de Desejos (Digite e use VÍRGULA):</label>
+                <label for="fa-wish-input">Sua Lista de Desejos (Digite e use VÍRGULA):</label>
                 <div class="tags-input-container">
                     <div id="wishes-tags" class="tags-list"></div>
                     <input type="text" id="fa-wish-input" placeholder="O que você quer ganhar?">
