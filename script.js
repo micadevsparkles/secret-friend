@@ -225,7 +225,7 @@ document.getElementById('cn-select-name').addEventListener('change', async (e) =
             if (status.isFirstAccess) {
                 // Ir para primeiro acesso
                 document.getElementById('fa-nome-user').innerText = nome;
-                wishesArray = [];
+              wishesArray.length = 0;
                 window[`render_fa-wish-input`]();
                 friendDrawn = "";
                 document.getElementById('btn-sortear').classList.remove('disabled');
