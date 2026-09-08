@@ -131,8 +131,12 @@ document.querySelector('.btn-voltar-events').addEventListener('click', () => {
 
 // ---------------- CRIAR EVENTO ----------------
 document.getElementById('btn-novo-evento').addEventListener('click', () => {
-    participantesArray = [];
-    window[`render_ce-participante-input`]();
+    // Esvazia o array mantendo a mesma referência de memória
+    participantesArray.length = 0; 
+    
+    if (window['render_ce-participante-input']) {
+        window['render_ce-participante-input']();
+    }
     showView('view-create-event');
 });
 
